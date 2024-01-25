@@ -1,9 +1,9 @@
 import streamlit as st
 import pandas as pd
 import random
-import numpy
 import csv
 
+st.set_page_config(page_title="Restaurantes", page_icon="♨")
 
 ######################### FUNCIONES #########################
 
@@ -39,7 +39,7 @@ def obtener_frase_aleatoria():
 
     return random.choice(frases)
 
-### Sistema de recomndación
+### Cargamos el sistema de recomndación creado en notebook "recomendaciones" y almacenado
 def cargar_sis_recomendacion():
     jaccard_csv = pd.read_csv('datos//df_jaccard.csv', sep=';', index_col='nombre')
     return jaccard_csv
@@ -79,7 +79,7 @@ def cargar_restaurantes():
     
     return dfagrupado
 
-### Sistema de recomendación
+### Recomendación
 def recomendacion_restaurant(palabra_clave: str):
     jaccard_csv = cargar_sis_recomendacion()
     dfagrupado = cargar_restaurantes()    
@@ -90,8 +90,10 @@ def recomendacion_restaurant(palabra_clave: str):
     restaurantes_prop = restaurantes_prop[restaurantes_prop['ciudad'].isin([txtCiudad])]
     # Ordeno los restaurantes por rating y tomo solo el mejor
     restaurantes_prop = restaurantes_prop.sort_values(by='avg_rating', ascending=False).head(1)
+    # Dejamos solo los campos que vamos a necesitar
     restaurantes_prop = restaurantes_prop[['nombre', 'direccion', 'ciudad', 'avg_rating']]
     
+    # Tomamos los datos generales y agrupamos para evitar restaurantes duplicados.
     dfagrupado_agrupado = dfagrupado.groupby(['nombre','direccion','ciudad']).agg({'avg_rating': 'mean'}).reset_index()
     
     # Filtrar restaurantes que contienen la palabra clave
@@ -106,10 +108,15 @@ def recomendacion_restaurant(palabra_clave: str):
     recomendaciones = jaccard_csv[restaurantes_recom].sort_values(ascending=False)
     
     restaurantes_recom = recomendaciones.reset_index()
+    # Unimos la recomendacion con el maestro de restaurantes para obtener los datos: direccion, ciudad y avg_rating
     restaurantes_recom = pd.merge(restaurantes_recom, dfagrupado_agrupado, left_on='nombre', right_on='nombre', how='left')
+    # Dejamos solo los campos que vamos a necesitar
     restaurantes_recom = restaurantes_recom[['nombre', 'direccion', 'ciudad', 'avg_rating']]
+    # Filtramos los resultados para que solo sean 4 recomendados
     restaurantes_recom = restaurantes_recom[restaurantes_recom['ciudad'] == txtCiudad].head(4)
     
+    # Agregamos en primer lugar, el restaurante perteneciente a nuestro cliente que tenga mejor avg_reviews
+    # Los demas lugares seran verdaderas recomendaciones
     restaurantes_prop = pd.concat([restaurantes_prop, restaurantes_recom]).reset_index(drop=True)
  
     return restaurantes_prop
@@ -124,8 +131,8 @@ st.write("🥐 🥨 🍗 🍔 🍕 🌭 🥪 🌮 🌯 🍘 🥟 🍨 🍩 ☕ �
 
 st.header("🗺️ ¿En qué ciudad de Florida te encuentras?")
 txtCiudad = st.selectbox("Confirma tu ubicación", lista_ciudades)
-btnCiudad = st.button("Confirmar")
-if btnCiudad:
+
+if txtCiudad !="":
     st.write(txtCiudad,' ,', obtener_frase_aleatoria())
 
 
@@ -134,3 +141,7 @@ options = st.text_input("Ej.: Cafe, Smoothies, Pizza, Tacos, Hot Dog, Chicken, S
 button6 = st.button("Recomendar")
 if button6:
     st.write(recomendacion_restaurant(options))
+
+st.divider()
+
+st.image('imagenes\SG-logo.png', caption=None, width=150, use_column_width=None, clamp=False, channels="RGB", output_format="auto")
