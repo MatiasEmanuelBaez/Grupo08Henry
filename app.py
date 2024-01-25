@@ -144,4 +144,4 @@ if button6:
 
 st.divider()
 
-st.image('imagenes\SG-logo.png', caption=None, width=150, use_column_width=None, clamp=False, channels="RGB", output_format="auto")
+st.image('imagenes\\SG-logo.png', caption=None, width=150, use_column_width=None, clamp=False, channels="RGB", output_format="auto")
